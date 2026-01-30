@@ -52,6 +52,10 @@ export default function NFTMinting() {
   const walletConnected = !!account;
 
   useEffect(() => {
+    async function connectWallet(){
+      await connect();
+    }
+    connectWallet();
     if (!user?.id || user.role !== "seller") return;
     getVerifiedProjects(user.id)
       .then(setVerifiedProjects)
@@ -60,6 +64,7 @@ export default function NFTMinting() {
   }, [user?.id, user?.role]);
 
   const handleMint = async (project: CarbonProject) => {
+    
     if (!signer || !account) {
       toast({ title: "Connect wallet", description: "Please connect MetaMask first.", variant: "destructive" });
       return;
@@ -345,7 +350,7 @@ export default function NFTMinting() {
                       <Button
                         variant="hero"
                         className="w-full gap-2"
-                        disabled={!walletConnected || !signer || isMinting}
+                        // disabled={!walletConnected || !signer || isMinting}
                         onClick={() => handleMint(project)}
                       >
                         {isMinting && selectedProject === project.id ? (
