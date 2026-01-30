@@ -27,6 +27,7 @@ import {
 import { ProjectType } from "@/types";
 import { getListedNFTsAll } from "@/lib/firestore-listings";
 import type { MarketplaceListing } from "@/lib/firestore-listings";
+import { ResolvedImage } from "@/components/ResolvedImage";
 
 const projectTypeIcons: Record<ProjectType, typeof TreePine> = {
   reforestation: TreePine,
@@ -165,7 +166,6 @@ export default function MarketplacePage() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredNFTs.map((nft, index) => {
             const TypeIcon = projectTypeIcons[nft.metadata.projectType];
-            const imageUrl = nft.metadata.image || "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=600&q=80";
             return (
               <Card
                 key={nft.id}
@@ -173,8 +173,8 @@ export default function MarketplacePage() {
                 className={`overflow-hidden animate-fade-up stagger-${(index % 5) + 1}`}
               >
                 <div className="relative h-48">
-                  <img
-                    src={imageUrl}
+                  <ResolvedImage
+                    imageRef={nft.metadata.image}
                     alt={nft.metadata.name}
                     className="w-full h-full object-cover"
                   />

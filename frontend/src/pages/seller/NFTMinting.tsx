@@ -19,7 +19,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { getVerifiedProjects, saveProjectContract, updateProjectNftId } from "@/lib/firestore-projects";
+import { getVerifiedProjects, saveProjectContract, updateProjectNftId, resolveImageUrl } from "@/lib/firestore-projects";
 import { addListing } from "@/lib/firestore-listings";
 import { uploadNFTMetadata } from "@/lib/nft-metadata";
 import type { CarbonProject } from "@/types";
@@ -85,7 +85,7 @@ export default function NFTMinting() {
         );
       }
       const contract = getCarbonCreditNFTContract(signer, contractAddress);
-      const imageUrl = project.photos?.[0] || "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=600&q=80";
+      const imageUrl = await resolveImageUrl(project.photos?.[0]) || "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=600&q=80";
       const vintage = project.startDate ? new Date(project.startDate).getFullYear() : new Date().getFullYear();
       const location = `${project.location.region}, ${project.location.country}`;
       const verificationProof = ethers.keccak256(ethers.toUtf8Bytes(`${project.id}-${project.volumeTCO2e}`));
