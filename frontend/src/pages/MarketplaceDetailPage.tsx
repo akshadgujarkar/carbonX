@@ -8,6 +8,7 @@ import { useWallet } from "@/contexts/WalletContext";
 import { getCarbonCreditNFTContract } from "@/lib/contract";
 import { getListingById, markListingSold } from "@/lib/firestore-listings";
 import type { MarketplaceListing } from "@/lib/firestore-listings";
+import { ResolvedImage } from "@/components/ResolvedImage";
 import {
   ArrowLeft,
   MapPin,
@@ -110,10 +111,11 @@ export default function MarketplaceDetailPage() {
         <Card variant="glass" className="overflow-hidden">
           <div className="grid md:grid-cols-2 gap-0">
             <div className="relative h-72 md:h-full min-h-[300px]">
-              <img
-                src={metadata.image || "https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&q=80"}
+              <ResolvedImage
+                imageRef={metadata.image}
                 alt={metadata.name}
                 className="w-full h-full object-cover"
+                fallback="https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&q=80"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
               <Badge variant="verified" className="absolute top-4 left-4 gap-1">

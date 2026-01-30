@@ -15,6 +15,10 @@ import type { CarbonNFT, ProjectType } from "@/types";
 
 const LISTINGS_COLLECTION = "marketplace_listings";
 
+/**
+ * Marketplace listing. metadata.image can be a URL (http/https/data) or a Firestore
+ * projectFiles document ID; resolve with resolveImageUrl() when displaying.
+ */
 export interface MarketplaceListing {
   id: string;
   tokenId: number;
@@ -26,6 +30,7 @@ export interface MarketplaceListing {
   metadata: {
     name: string;
     description: string;
+    /** URL or Firestore projectFiles doc id */
     image: string;
     projectType: ProjectType;
     volumeTCO2e: number;

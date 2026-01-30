@@ -90,6 +90,7 @@ Create these composite indexes in [Firebase Console](https://console.firebase.go
 - **projects**: Collection `projects`, fields: `sellerId` (Ascending), `updatedAt` (Descending).
 - **marketplace_listings**: Collection `marketplace_listings`, fields: `contractAddress` (Ascending), `status` (Ascending), `listedAt` (Descending).
 - **marketplace_listings (buyer)**: Collection `marketplace_listings`, fields: `buyerId` (Ascending), `soldAt` (Descending).
+- **projectFiles** (optional, if you use `getProjectFile(projectId, fileName)`): Collection `projectFiles`, fields: `projectId` (Ascending), `fileName` (Ascending). Files are usually fetched by doc id (`getProjectFileById`) so this index is only needed for lookup by projectId + fileName.
 
 ## 5. Seller “verified” status (demo)
 

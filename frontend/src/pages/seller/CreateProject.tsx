@@ -32,7 +32,7 @@ import {
 import { ProjectType } from "@/types";
 import {
   createProject as createProjectInFirestore,
-  uploadProjectFile,
+  saveProjectFile,
   saveACVAReport,
   updateProjectWithReport,
 } from "@/lib/firestore-projects";
@@ -116,16 +116,16 @@ export default function CreateProject() {
     setIsLoading(true);
     try {
       const pid = doc(collection(db, "projects")).id;
-      const photoUrls: string[] = [];
+      const photoFileIds: string[] = [];
       for (let i = 0; i < photos.length; i++) {
-        const url = await uploadProjectFile(pid, "photos", photos[i]);
-        photoUrls.push(url);
+        const fileId = await saveProjectFile(pid, `photo_${i}`, photos[i]);
+        photoFileIds.push(fileId);
       }
-      const govUrl = govApprovalDoc
-        ? await uploadProjectFile(pid, "docs", govApprovalDoc)
+      const governmentApprovalDocFileId = govApprovalDoc
+        ? await saveProjectFile(pid, "governmentApproval", govApprovalDoc)
         : undefined;
-      const complianceUrl = complianceDoc
-        ? await uploadProjectFile(pid, "docs", complianceDoc)
+      const complianceDocFileId = complianceDoc
+        ? await saveProjectFile(pid, "compliance", complianceDoc)
         : undefined;
       const id = await createProjectInFirestore(
         {
@@ -137,9 +137,9 @@ export default function CreateProject() {
           startDate: startDate ? new Date(startDate) : new Date(),
           volumeTCO2e: Number(volume) || 0,
           monitoringPlan,
-          governmentApprovalDocUrl: govUrl,
-          complianceDocUrl: complianceUrl,
-          photoUrls,
+          governmentApprovalDocFileId,
+          complianceDocFileId,
+          photoFileIds,
           complianceStatus: complianceDoc ? "compliant" : "pending",
         },
         pid

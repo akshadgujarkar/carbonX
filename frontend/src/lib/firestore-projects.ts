@@ -10,12 +10,22 @@ import {
   updateDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "./firebase";
+import { db } from "./firebase";
 import type { CarbonProject, ProjectType, VerificationStatus } from "@/types";
 
 const PROJECTS_COLLECTION = "projects";
+const PROJECT_FILES_COLLECTION = "projectFiles";
 const REPORTS_COLLECTION = "acvaReports";
+
+/** Firestore document for a project file (base64). Firestore doc max ~1MB; keep files small. */
+export interface ProjectFileDoc {
+  id: string;
+  projectId: string;
+  fileName: string;
+  contentType: string;
+  base64: string;
+  createdAt?: Date;
+}
 
 export interface ProjectCreateInput {
   sellerId: string;
@@ -26,21 +36,109 @@ export interface ProjectCreateInput {
   startDate: Date;
   volumeTCO2e: number;
   monitoringPlan: string;
-  governmentApprovalDocUrl?: string;
-  complianceDocUrl?: string;
-  photoUrls: string[];
+  /** Firestore document IDs in projectFiles collection */
+  governmentApprovalDocFileId?: string;
+  complianceDocFileId?: string;
+  /** Array of Firestore document IDs (projectFiles) for photos */
+  photoFileIds: string[];
   complianceStatus: "compliant" | "non_compliant" | "pending";
 }
 
-export async function uploadProjectFile(
+/**
+ * Read a File as base64. Firestore document limit ~1MB; use for small files only.
+ */
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(",")[1] ?? result;
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Save a project file to Firestore (base64) under the `projectFiles` collection.
+ * Returns the Firestore document ID to store in the project (e.g. photos array or doc ref).
+ */
+export async function saveProjectFile(
   projectId: string,
-  folder: string,
+  fileName: string,
   file: File
 ): Promise<string> {
-  const path = `projects/${projectId}/${folder}/${Date.now()}_${file.name}`;
-  const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
+  const base64 = await fileToBase64(file);
+  const fileId = doc(collection(db, PROJECT_FILES_COLLECTION)).id;
+  const docRef = doc(db, PROJECT_FILES_COLLECTION, fileId);
+  await setDoc(docRef, {
+    id: fileId,
+    projectId,
+    fileName,
+    contentType: file.type || "application/octet-stream",
+    base64,
+    createdAt: serverTimestamp(),
+  });
+  return fileId;
+}
+
+/**
+ * Get a project file by (projectId, fileName). Returns first match if multiple exist.
+ */
+export async function getProjectFile(
+  projectId: string,
+  fileName: string
+): Promise<{ base64: string; contentType: string } | null> {
+  const q = query(
+    collection(db, PROJECT_FILES_COLLECTION),
+    where("projectId", "==", projectId),
+    where("fileName", "==", fileName)
+  );
+  const snap = await getDocs(q);
+  const first = snap.docs[0];
+  if (!first) return null;
+  const data = first.data();
+  return { base64: data.base64, contentType: data.contentType || "application/octet-stream" };
+}
+
+/**
+ * Get a project file by its Firestore document ID (e.g. from project.photos[0]).
+ */
+export async function getProjectFileById(
+  fileId: string
+): Promise<{ base64: string; contentType: string } | null> {
+  const docRef = doc(db, PROJECT_FILES_COLLECTION, fileId);
+  const snap = await getDoc(docRef);
+  if (!snap.exists()) return null;
+  const data = snap.data();
+  return { base64: data.base64, contentType: data.contentType || "application/octet-stream" };
+}
+
+/**
+ * Get a data URL for use in img src or token metadata, by file document ID.
+ */
+export async function getProjectFileDataUrl(fileId: string): Promise<string | null> {
+  const file = await getProjectFileById(fileId);
+  if (!file) return null;
+  return `data:${file.contentType};base64,${file.base64}`;
+}
+
+/**
+ * Resolve an image reference to a URL. If it's already a URL (http/https/data), return as-is.
+ * Otherwise treat as a Firestore projectFiles document ID and return a data URL.
+ */
+export async function resolveImageUrl(imageRef: string | undefined): Promise<string> {
+  if (!imageRef) return "";
+  if (
+    imageRef.startsWith("http:") ||
+    imageRef.startsWith("https:") ||
+    imageRef.startsWith("data:")
+  ) {
+    return imageRef;
+  }
+  const dataUrl = await getProjectFileDataUrl(imageRef);
+  return dataUrl ?? "";
 }
 
 export async function createProject(
@@ -62,9 +160,9 @@ export async function createProject(
     startDate: input.startDate,
     volumeTCO2e: input.volumeTCO2e,
     verificationStatus: "pending",
-    governmentApprovalDoc: input.governmentApprovalDocUrl ?? null,
+    governmentApprovalDoc: input.governmentApprovalDocFileId ?? null,
     monitoringPlan: input.monitoringPlan,
-    photos: input.photoUrls,
+    photos: input.photoFileIds,
     complianceStatus: input.complianceStatus,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
