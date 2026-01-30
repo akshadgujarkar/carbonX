@@ -25,8 +25,11 @@ import BuyerOnboarding from "@/pages/buyer/BuyerOnboarding";
 // Seller Pages
 import SellerDashboard from "@/pages/seller/SellerDashboard";
 import SellerOnboarding from "@/pages/seller/SellerOnboarding";
+import SellerProjects from "@/pages/seller/SellerProjects";
 import CreateProject from "@/pages/seller/CreateProject";
 import NFTMinting from "@/pages/seller/NFTMinting";
+import SellerReports from "@/pages/seller/SellerReports";
+import SellerSettings from "@/pages/seller/SellerSettings";
 
 const queryClient = new QueryClient();
 
@@ -59,8 +62,11 @@ const App = () => (
             <Route path="/seller" element={<SellerLayout />}>
               <Route index element={<SellerDashboard />} />
               <Route path="onboarding" element={<SellerOnboarding />} />
+              <Route path="projects" element={<SellerProjects />} />
               <Route path="projects/new" element={<CreateProject />} />
               <Route path="nfts" element={<NFTMinting />} />
+              <Route path="reports" element={<SellerReports />} />
+              <Route path="settings" element={<SellerSettings />} />
             </Route>
 
             {/* Catch-all */}
