@@ -1,0 +1,119 @@
+import { ReactNode } from "react";
+import { Link, useLocation, Outlet } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Leaf,
+  LayoutDashboard,
+  BarChart3,
+  ShoppingCart,
+  FileText,
+  Settings,
+  LogOut,
+  Wallet,
+  Target,
+  Upload,
+  ChevronRight,
+} from "lucide-react";
+
+const buyerNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/buyer" },
+  { icon: BarChart3, label: "Emissions", path: "/buyer/emissions" },
+  { icon: Target, label: "Offset Goals", path: "/buyer/goals" },
+  { icon: ShoppingCart, label: "Marketplace", path: "/marketplace" },
+  { icon: FileText, label: "Compliance", path: "/buyer/compliance" },
+  { icon: Settings, label: "Settings", path: "/buyer/settings" },
+];
+
+export default function BuyerLayout() {
+  const { user, logout } = useAuth();
+  const location = useLocation();
+
+  const isActive = (path: string) => {
+    if (path === "/buyer") {
+      return location.pathname === "/buyer";
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  return (
+    <div className="min-h-screen flex">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-sidebar border-r border-sidebar-border flex flex-col z-40">
+        {/* Logo */}
+        <div className="h-16 flex items-center px-6 border-b border-sidebar-border">
+          <Link to="/" className="flex items-center gap-2">
+            <Leaf className="h-7 w-7 text-primary" />
+            <span className="font-display font-bold text-xl text-gradient-primary">
+              CarbonX
+            </span>
+          </Link>
+        </div>
+
+        {/* User Info */}
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <span className="text-primary font-semibold">
+                {user?.companyName?.charAt(0) || "B"}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium truncate">
+                {user?.companyName || "Buyer Company"}
+              </p>
+              <Badge variant="verified" className="text-xs">
+                Buyer
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {buyerNavItems.map((item) => (
+            <Link key={item.path} to={item.path}>
+              <Button
+                variant={isActive(item.path) ? "default" : "ghost"}
+                className={`w-full justify-start gap-3 ${
+                  isActive(item.path) ? "" : "text-sidebar-foreground"
+                }`}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Button>
+            </Link>
+          ))}
+        </nav>
+
+        {/* Wallet */}
+        <div className="p-4 border-t border-sidebar-border">
+          <Button variant="outline" className="w-full justify-start gap-3">
+            <Wallet className="h-4 w-4" />
+            Connect Wallet
+          </Button>
+        </div>
+
+        {/* Logout */}
+        <div className="p-4 border-t border-sidebar-border">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-muted-foreground"
+            onClick={() => logout()}
+          >
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 ml-64">
+        <div className="min-h-screen bg-gradient-hero">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
