@@ -153,3 +153,25 @@ export async function getPurchasesByBuyer(buyerId: string): Promise<MarketplaceL
     return bTime - aTime;
   });
 }
+
+export async function getListingsBySeller(sellerId: string): Promise<MarketplaceListing[]> {
+  const q = query(
+    collection(db, LISTINGS_COLLECTION),
+    where("sellerId", "==", sellerId)
+  );
+  const snap = await getDocs(q);
+  const listings = snap.docs.map((d) => {
+    const data = d.data();
+    return {
+      ...data,
+      id: d.id,
+      listedAt: data.listedAt?.toDate?.() ?? data.listedAt,
+      soldAt: data.soldAt?.toDate?.() ?? data.soldAt,
+    } as MarketplaceListing;
+  });
+  return listings.sort((a, b) => {
+    const aTime = a.listedAt instanceof Date ? a.listedAt.getTime() : 0;
+    const bTime = b.listedAt instanceof Date ? b.listedAt.getTime() : 0;
+    return bTime - aTime;
+  });
+}
